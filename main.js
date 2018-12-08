@@ -18,7 +18,7 @@ var util_f = function(bottle, utils) {
 var util_many = function(bottles, utils){
   // note: [[1,2], [2,], [3,4]].reduce((a, b) => a + b[0], 0) -> 6
   var sum = bottles.reduce((s, b) => s + util_f(b, utils), 0);
-  console.log('reduce_many: ', bottles, utils, sum);
+//   console.log('reduce_many: ', bottles, utils, sum);
   return sum;
 }
 
@@ -27,7 +27,7 @@ var util_many = function(bottles, utils){
 var test_params = function(bottles, util) {
   var ranges = [
     (util[0] < 1 ? [1,2,3,4,5,6,7] : [util[0],]),
-    (util[1] < 1 ? [1,2,3,4,5,6,7] : [util[2],]),
+    (util[1] < 1 ? [1,2,3,4,5,6,7] : [util[1],]),
     (util[2] < 1 ? [1,2,3,4,5,6,7] : [util[2],]),
   ]
   console.log(ranges)
@@ -42,4 +42,4 @@ var test_params = function(bottles, util) {
 
 console.log(util_f(bottle3, utilities))
 
-test_params([bottle3,bottle4], [5,4,0])
+test_params([bottle3,bottle4], [0,4,7])
