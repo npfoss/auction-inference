@@ -14,31 +14,31 @@ var util_f = function(bottle, utils) {
   return v_u + o_u + w_u;
 };
 
+
 // uses util_f to find the utility of a list of bottles
 var util_many = function(bottles, utils){
-  // note: [[1,2], [2,], [3,4]].reduce((a, b) => a + b[0], 0) -> 6
-  var sum = bottles.reduce((s, b) => s + util_f(b, utils), 0);
-//   console.log('reduce_many: ', bottles, utils, sum);
+  // note: [[1,2], [2,], [3,4]].reduce((a\, b) => a + b[0], 0) -> 6
+  var sum_helper = function(b, s) {
+    return s + util_f(b, utils)
+  }
+  var sum = reduce(sum_helper, 0, bottles);
   return sum;
 }
 
 // takes a list of bottles and a utility function with some number of 0s.
 //  tests all values 1-7 for the 0s and prints them
 var test_params = function(bottles, util) {
-  var ranges = [
-    (util[0] < 1 ? [1,2,3,4,5,6,7] : [util[0],]),
-    (util[1] < 1 ? [1,2,3,4,5,6,7] : [util[1],]),
-    (util[2] < 1 ? [1,2,3,4,5,6,7] : [util[2],]),
-  ]
-  console.log(ranges)
-  ranges[0].forEach(function(u0){
-    ranges[1].forEach(function(u1){
-      ranges[2].forEach(function(u2){
+  var ranges0 = (util[0] < 1 ? [1,2,3,4,5,6,7] : [util[0],])
+  var ranges1 = (util[1] < 1 ? [1,2,3,4,5,6,7] : [util[1],])
+  var ranges2 = (util[2] < 1 ? [1,2,3,4,5,6,7] : [util[2],])
+  map(function(u0){
+    map(function(u1){
+      map(function(u2){
         console.log([u0,u1,u2], " : ", util_many(bottles, [u0,u1,u2]));
-      })
-    })
-  })
-};
+      }, ranges2)
+    }, ranges1)
+  }, ranges0)
+}
 
 console.log(util_f(bottle3, utilities))
 
