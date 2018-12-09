@@ -1,7 +1,14 @@
 
-var utilities = [5, 3, 6];
+var utilities = [6, 2, 2];
+var bottle1 = [1500, true, false];
+var bottle2 = [1150, true, true];
 var bottle3 = [1150, true, false];
 var bottle4 = [1200, false, true];
+var bottle5 = [750, true, false];
+var bottle6 = [700, false, true];
+var bottle7 = [700, false, false];
+var bottle8 = [700, true, true];
+var allbottles = [bottle1,bottle2,bottle3,bottle4,bottle5,bottle6,bottle7,bottle8]
 
 // utility of a bottle (list of attributes) with the given utilities (list of weights)
 var util_f = function(bottle, utils) {
@@ -42,4 +49,6 @@ var test_params = function(bottles, util) {
 
 console.log(util_f(bottle3, utilities))
 
-test_params([bottle3,bottle4], [0,4,7])
+test_params(allbottles, [0,4,7])
+
+console.log(util_many([bottle1,bottle3,bottle5,bottle7,bottle8], utilities))
