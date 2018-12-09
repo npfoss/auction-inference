@@ -31,7 +31,6 @@ var util_f = function(bottle, utils) {
   return v_u + o_u + w_u;
 };
 
-
 // uses util_f to find the utility of a list of bottles
 var util_many = function(bottles, utils){
   // note: [[1,2], [2,], [3,4]].reduce((a\, b) => a + b[0], 0) -> 6
