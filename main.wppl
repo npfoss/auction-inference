@@ -1,6 +1,6 @@
-var won = [4,7,6];
-var utilities = [1, 6, 1];
-var katie_util = [6,2,2,];
+var won = [1,6,4,5];
+var utilities =  [4, 2, 5];
+var katie_util = [4, 2, 5];
 var params = utilities;
 var bottle1 = [1500, false, false];
 var bottle2 = [1150, false, true];
@@ -62,8 +62,6 @@ var test_params = function(bottles, util) {
     }, ranges1)
   }, ranges0)
 }
-
-console.log(util_f(bottle3, utilities))
 
 test_params(allbottles, params)
 
