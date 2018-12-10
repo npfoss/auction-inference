@@ -76,19 +76,24 @@ var get_bid = function(bottles_left, util, money, op_util, op_money, depth){
           + alpha *(get_bid(bottles_left, op_util, op_money, util, money, depth-1));
 }
 
-var get_all_bids = function(bottles, util, money, op_util, op_money, depth){
+var perform_auction = function(bottles, util, money, depth, op_util, op_money, op_depth){
   if (bottles.length == 0) {
     return []
   }
-  var bid = get_bid(bottles, util, money, op_util, op_util, depth)
-  return [[bottles[0], bid],].concat(get_all_bids(bottles.slice(1), util, money - bid, op_util, op_money, depth))
+  var bid1 = get_bid(bottles, util, money, op_util, op_util, depth)
+  var bid2 = get_bid(bottles, op_util, op_money, util, util, depth)
+  if (bid1 > bid2) {
+    return [[bottles[0], bid1, bid2],].concat(perform_auction(bottles.slice(1), util, money - (bid1+bid2)/2, depth, op_util, op_money, op_depth))
+  } else {
+    return [[bottles[0], bid1, bid2],].concat(perform_auction(bottles.slice(1), util, money, depth, op_util, op_money - (bid1+bid2)/2, op_depth))
+  }
 }
 
 var dist = Infer({method:"MCMC", samples:5000}, function(){
   var util = [
-    categorical({ps:[1/7,1/7,1/7,1/7,1/7,1/7,1/7], vs:[1,2,3,4,5,6,7,]}),
-    categorical({ps:[1/7,1/7,1/7,1/7,1/7,1/7,1/7], vs:[1,2,3,4,5,6,7,]}),
-    categorical({ps:[1/7,1/7,1/7,1/7,1/7,1/7,1/7], vs:[1,2,3,4,5,6,7,]}),
+    uniform({a:1, b:7}),
+    uniform({a:1, b:7}),
+    uniform({a:1, b:7}),
   ];
 
   // print(util)
@@ -96,17 +101,36 @@ var dist = Infer({method:"MCMC", samples:5000}, function(){
   var op_util = [4,4,4];
   var op_money = 80;
 
-  var bottlebids = get_all_bids(allbottles, util, money, op_util, op_money, 0)
+  // this is a list of bottles and the amounts bid for them by each player
+  var bottlebids = perform_auction(allbottles, util, money, 0, op_util, op_money, 0)
+  // from here on out I'm changing notation to p1 and p2 instead of _ and op
 
-  map(function(bb){
-    var bottle = bb[0];
-    var bid = bb[1];
-    if (bottle[1]) {
-      condition(bid > 10);
-    }
-  }, bottlebids)
+  var p1_max_util = util_many(allbottles, util)
+  var p2_max_util = util_many(allbottles, op_util)
 
-  return util[1]
+  var p1_util = util_many(map(function(bbb) {
+      return bbb[0];
+    },filter(function(bbb){
+      return bbb[1] > bbb[2];
+    }, bottlebids)), util)
+
+  var p2_util = util_many(map(function(bbb) {
+      return bbb[0];
+    },filter(function(bbb){
+      return bbb[2] > bbb[1];
+    }, bottlebids)), util)
+
+  // print(p1_util, p2_util)
+
+  // map(function(bb){
+  //   var bottle = bb[0];
+  //   var bid = bb[1];
+  //   if (bottle[1]) {
+  //     condition(bid > 10);
+  //   }
+  // }, bottlebids)
+
+  return p1_util
 })
 
 
