@@ -96,17 +96,19 @@ var dist = Infer({method:"MCMC", samples:5000}, function(){
     uniform({a:1, b:7}),
   ];
 
+  var bottles = _.shuffle(allbottles);
+
   // print(util)
   var money = 80;
   var op_util = [4,4,4];
   var op_money = 80;
 
   // this is a list of bottles and the amounts bid for them by each player
-  var bottlebids = perform_auction(allbottles, util, money, 1, op_util, op_money, 0)
+  var bottlebids = perform_auction(bottles, util, money, 1, op_util, op_money, 0)
   // from here on out I'm changing notation to p1 and p2 instead of _ and op
 
-  var p1_max_util = util_many(allbottles, util)
-  var p2_max_util = util_many(allbottles, op_util)
+  var p1_max_util = util_many(bottles, util)
+  var p2_max_util = util_many(bottles, op_util)
 
   var p1_util = util_many(map(function(bbb) {
       return bbb[0];
