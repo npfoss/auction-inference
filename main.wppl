@@ -12,6 +12,8 @@ var bottle7 = [700, true, false];
 var bottle8 = [700, false, true];
 var allbottles = [bottle1,bottle2,bottle3,bottle4,bottle5,bottle6,bottle7,bottle8];
 
+var alpha = .5; // how much you change your bid based on your opponent (1 means copy theirs, 0 means don't care)
+
 // given list of bottles of the form [1,3,6,7], returns all the other ones
 var complete_partion = function(p){
   return filter(function(elt) {
@@ -62,9 +64,53 @@ var test_params = function(bottles, util) {
     }, ranges1)
   }, ranges0)
 }
+// test_params(allbottles, params)
 
-test_params(allbottles, params)
+// get bid for first bottle in list, given your and your opponent's utilities
+var get_bid = function(bottles_left, util, money, op_util, op_money, depth){
+  if (depth == 0){
+    return money * util_f(bottles_left[0], util) / util_many(bottles_left, util);
+  }
+  // otherwise, the mean of that and what you think your opponent will bid
+  return (1-alpha)*(money * util_f(bottles_left[0], util) / util_many(bottles_left, util))
+          + alpha *(get_bid(bottles_left, op_util, op_money, util, money, depth-1));
+}
 
-// console.log(util_many([bottle4,bottle5,bottle1,bottle2], utilities))
-console.log(util_many_lazy(won, utilities))
-console.log(util_many_lazy(complete_partion(won), katie_util))
+var get_all_bids = function(bottles, util, money, op_util, op_money, depth){
+  if (bottles.length == 0) {
+    return []
+  }
+  var bid = get_bid(bottles, util, money, op_util, op_util, depth)
+  return [[bottles[0], bid],].concat(get_all_bids(bottles.slice(1), util, money - bid, op_util, op_money, depth))
+}
+
+var dist = Infer({method:"MCMC", samples:5000}, function(){
+  var util = [
+    categorical({ps:[1/7,1/7,1/7,1/7,1/7,1/7,1/7], vs:[1,2,3,4,5,6,7,]}),
+    categorical({ps:[1/7,1/7,1/7,1/7,1/7,1/7,1/7], vs:[1,2,3,4,5,6,7,]}),
+    categorical({ps:[1/7,1/7,1/7,1/7,1/7,1/7,1/7], vs:[1,2,3,4,5,6,7,]}),
+  ];
+
+  // print(util)
+  var money = 80;
+  var op_util = [4,4,4];
+  var op_money = 80;
+
+  var bottlebids = get_all_bids(allbottles, util, money, op_util, op_money, 0)
+
+  map(function(bb){
+    var bottle = bb[0];
+    var bid = bb[1];
+    if (bottle[1]) {
+      condition(bid > 10);
+    }
+  }, bottlebids)
+
+  return util[1]
+})
+
+
+viz(dist)
+
+// console.log(util_many_lazy(won, utilities))
+// console.log(util_many_lazy(complete_partion(won), katie_util))
