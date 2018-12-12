@@ -39,8 +39,8 @@ var util_many = function(bottles, utils) {
   var sum_helper = function(b, s) {
     return s + util_f(b, utils)
   }
-  var sum = reduce(sum_helper, 0, bottles);
-  return sum;
+  var su = reduce(sum_helper, 0, bottles);
+  return su;
 }
 
 // same things as util_many, but you pass just numbers instead of actual bottles
@@ -68,6 +68,7 @@ var test_params = function(bottles, util) {
 
 // get bid for first bottle in list, given your and your opponent's utilities
 var get_bid = function(bottles_left, util, money, op_util, op_money, depth){
+  // don't use this any more pls
   if (depth == 0){
     return money * util_f(bottles_left[0], util) / util_many(bottles_left, util);
   }
@@ -78,19 +79,31 @@ var get_bid = function(bottles_left, util, money, op_util, op_money, depth){
 
 var dumb_strat_generator = function(util){
   var dumb_strat = function(bids_so_far, bottles, money, op_money){
-    if (util[0] > 5){
-      return Categorical({vs: [5,], ps: [1,]}) // TODO
-    } else {
-      return Categorical({vs: [5,], ps: [1,]}) // TODO
-    }
+    return Categorical({vs: [_.min([20,money]),], ps: [1,]})
   }
   return dumb_strat
 }
 
+var proportional_strat_generator = function(util){
+  var prop_strat = function(bids_so_far, bottles, money, op_money){
+    return Categorical({vs: [money * util_f(bottles[bids_so_far.length], util) / util_many(bottles.slice(bids_so_far.length), util),], ps: [1,]});
+  }
+  return prop_strat
+}
+
+// this works
+var get_money_left = function(bids_so_far, starting_money, player_num/*1 or 2*/){
+  return starting_money - sum(map(function(bb){
+    return player_num == 1 ?
+          (bb[1] >= bb[2] ? (bb[1] + bb[2]) / 2 : 0)
+        : (bb[2] >  bb[1] ? (bb[1] + bb[2]) / 2 : 0);
+  }, bids_so_far));
+}
+
 var perform_auction = function(bottles, starting_money, p1_action_fn, p2_action_fn){
   reduce(function(bottle, bids_so_far){
-    var money = 5 // TODO
-    var op_money = 5 // TODO
+    var money = get_money_left(bids_so_far, starting_money, 1)
+    var op_money = get_money_left(bids_so_far, starting_money, 2)
     var bid1 = sample(p1_action_fn(bids_so_far, bottles, money, op_money))
     var bid2 = sample(p2_action_fn(bids_so_far, bottles, op_money, money))
     return bids_so_far.concat([[bottles[0], bid1, bid2],])
@@ -114,7 +127,7 @@ var dist = Infer({method:"MCMC", samples:5000}, function(){
 
   // this is a list of bottles and the amounts bid for them by each player
   // var bottlebids = perform_auction(allbottles, util, money, 1, op_util, op_money, 0)
-  var bottlebids = perform_auction(allbottles, money, dumb_strat_generator(util), dumb_strat_generator(op_util))
+  var bottlebids = perform_auction(allbottles, money, proportional_strat_generator(util), dumb_strat_generator(op_util))
   // from here on out I'm changing notation to p1 and p2 instead of _ and op
 
   var p1_max_util = util_many(bottles, util)
@@ -141,8 +154,8 @@ var dist = Infer({method:"MCMC", samples:5000}, function(){
   //     condition(bid > 10);
   //   }
   // }, bottlebids)
-
-  return p1_util > 30
+  // print(bottlebids)
+  return p1_util// > 30
 })
 
 
