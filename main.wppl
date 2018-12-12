@@ -88,7 +88,7 @@ var proportional_strat_generator = function(util){
   var prop_strat = function(bids_so_far, bottles, money, op_money){
     return Gaussian({
         mu: money * util_f(bottles[bids_so_far.length], util) / util_many(bottles.slice(bids_so_far.length), util),
-        sigma: 4});
+        sigma: 2});
   }
   return prop_strat
 }
