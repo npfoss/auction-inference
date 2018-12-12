@@ -114,7 +114,7 @@ var perform_auction = function(bottles, starting_money, p1_action_fn, p2_action_
   bottles)
 }
 
-var dist = Infer({method:"MCMC", samples:50000}, function(){
+var dist = Infer({method:"MCMC", samples:50000, callbacks: [editor.MCMCProgress()]}, function(){
   var util = [
     sample(Uniform({a:1, b:7})),
     sample(Uniform({a:1, b:7})),
