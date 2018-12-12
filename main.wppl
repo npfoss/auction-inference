@@ -114,9 +114,9 @@ var perform_auction = function(bottles, starting_money, p1_action_fn, p2_action_
 
 var dist = Infer({method:"MCMC", samples:5000}, function(){
   var util = [
-    uniform({a:1, b:7}),
-    uniform({a:1, b:7}),
-    uniform({a:1, b:7}),
+    sample(Uniform({a:1, b:7})),
+    sample(Uniform({a:1, b:7})),
+    sample(Uniform({a:1, b:7})),
   ];
 
   var bottles = _.shuffle(allbottles);
