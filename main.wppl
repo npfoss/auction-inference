@@ -34,7 +34,7 @@ var util_f = function(bottle, utils) {
 };
 
 // uses util_f to find the utility of a list of bottles
-var util_many = function(bottles, utils){
+var util_many = function(bottles, utils) {
   // note: [[1,2], [2,], [3,4]].reduce((a\, b) => a + b[0], 0) -> 6
   var sum_helper = function(b, s) {
     return s + util_f(b, utils)
@@ -76,17 +76,27 @@ var get_bid = function(bottles_left, util, money, op_util, op_money, depth){
           + alpha *(get_bid(bottles_left, op_util, op_money, util, money, depth-1));
 }
 
-var perform_auction = function(bottles, util, money, depth, op_util, op_money, op_depth){
-  if (bottles.length == 0) {
-    return []
+var dumb_strat_generator = function(util){
+  var dumb_strat = function(bids_so_far, bottles, money, op_money){
+    if (util[0] > 5){
+      return Categorical({vs: [5,], ps: [1,]}) // TODO
+    } else {
+      return Categorical({vs: [5,], ps: [1,]}) // TODO
+    }
   }
-  var bid1 = get_bid(bottles, util, money, op_util, op_money, depth)
-  var bid2 = get_bid(bottles, op_util, op_money, util, money, op_depth)
-  if (bid1 > bid2) {
-    return [[bottles[0], bid1, bid2],].concat(perform_auction(bottles.slice(1), util, money - (bid1+bid2)/2, depth, op_util, op_money, op_depth))
-  } else {
-    return [[bottles[0], bid1, bid2],].concat(perform_auction(bottles.slice(1), util, money, depth, op_util, op_money - (bid1+bid2)/2, op_depth))
-  }
+  return dumb_strat
+}
+
+var perform_auction = function(bottles, starting_money, p1_action_fn, p2_action_fn){
+  reduce(function(bottle, bids_so_far){
+    var money = 5 // TODO
+    var op_money = 5 // TODO
+    var bid1 = sample(p1_action_fn(bids_so_far, bottles, money, op_money))
+    var bid2 = sample(p2_action_fn(bids_so_far, bottles, op_money, money))
+    return bids_so_far.concat([[bottles[0], bid1, bid2],])
+  },
+  [],
+  bottles)
 }
 
 var dist = Infer({method:"MCMC", samples:5000}, function(){
@@ -101,10 +111,10 @@ var dist = Infer({method:"MCMC", samples:5000}, function(){
   // print(util)
   var money = 80;
   var op_util = [4,4,4];
-  var op_money = 80;
 
   // this is a list of bottles and the amounts bid for them by each player
-  var bottlebids = perform_auction(bottles, util, money, 1, op_util, op_money, 0)
+  // var bottlebids = perform_auction(allbottles, util, money, 1, op_util, op_money, 0)
+  var bottlebids = perform_auction(allbottles, money, dumb_strat_generator(util), dumb_strat_generator(op_util))
   // from here on out I'm changing notation to p1 and p2 instead of _ and op
 
   var p1_max_util = util_many(bottles, util)
@@ -113,7 +123,7 @@ var dist = Infer({method:"MCMC", samples:5000}, function(){
   var p1_util = util_many(map(function(bbb) {
       return bbb[0];
     },filter(function(bbb){
-      return bbb[1] > bbb[2];
+      return bbb[1] >= bbb[2];
     }, bottlebids)), util)
 
   var p2_util = util_many(map(function(bbb) {
