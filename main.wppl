@@ -1,3 +1,5 @@
+var N = 20; // number of bottles
+var starting_money = 300;
 var won = [1,6,4,5];
 var utilities =  [4, 2, 5];
 var katie_util = [4, 2, 5];
@@ -76,6 +78,24 @@ var test_params = function(bottles, util) {
     }, ranges1)
   }, ranges0)
 }
+
+var gen_balanced_util = function(bottles, util, target_util) {
+  var ranges0 = (util[0] < 1 ? [1,2,3,4,5,6,7] : [util[0],])
+  var ranges1 = (util[1] < 1 ? [1,2,3,4,5,6,7] : [util[1],])
+  var ranges2 = (util[2] < 1 ? [1,2,3,4,5,6,7] : [util[2],])
+  var possible_utils = reduce(function(u0, lst0){
+    return lst0.concat(reduce(function(u1, lst1){
+      return lst1.concat(reduce(function(u2, lst2){
+        return lst2.concat([[Math.abs(util_many(bottles, [u0,u1,u2])-target_util), [u0,u1,u2]]])
+      }, [], ranges2))
+    }, [], ranges1))
+  }, [], ranges0)
+  return reduce(function(a,b){
+      return a[0] < b[0] ? a : b;
+    }, [99999999, [0,0,0]],
+    possible_utils)
+  }
+
 // test_params(allbottles, params)
 
 // get bid for first bottle in list, given your and your opponent's utilities
@@ -91,7 +111,7 @@ var get_bid = function(bottles_left, util, money, op_util, op_money, depth){
 
 var dumb_strat_generator = function(util){
   var dumb_strat = function(bids_so_far, bottles, money, op_money){
-    return Gaussian({mu:20, sigma:1})
+    return Gaussian({mu:2 * starting_money / N, sigma:1})
   }
   return dumb_strat
 }
@@ -111,8 +131,9 @@ var proportional_strat_generator = function(util){
   return prop_strat
 }
 
-var meta_strat_generator = function(primary_strat, op_strat) {
+var meta_strat_generator = function(primary_strat, op_strat_generator) {
   var meta_strat = function(bids_so_far, bottles, money, op_money){
+    var op_strat = op_strat_generator(infer_utils(op_strat_generator, bids_so_far))
     var bid_0 = sample(primary_strat(bids_so_far, bottles, money, op_money));
     var op_bid = sample(op_strat(bids_so_far, bottles, money, op_money));
     return Gaussian({mu:(1-alpha) * bid_0 + alpha * op_bid, sigma: 1})
@@ -120,8 +141,24 @@ var meta_strat_generator = function(primary_strat, op_strat) {
   return meta_strat
 }
 
+var gen_random_util = function() {
+  return [
+    sample(Uniform({a:1, b:7})),
+    sample(Uniform({a:1, b:7})),
+    sample(Uniform({a:1, b:7})),
+  ];
+}
+
+var infer_utils = function(op_strat_generator, bids_so_far) {
+
+  var dist = Infer({method:'MCMC', samples: 5000}, op_strat_generator()
+  )
+
+}
+
+
 // this works
-var get_money_left = function(bids_so_far, starting_money, player_num/*1 or 2*/){
+var get_money_left = function(bids_so_far, player_num/*1 or 2*/){
   return starting_money - sum(map(function(bb){
     return player_num == 1 ?
           (bb[1] >= bb[2] ? (bb[1] + bb[2]) / 2 : 0)
@@ -129,10 +166,10 @@ var get_money_left = function(bids_so_far, starting_money, player_num/*1 or 2*/)
   }, bids_so_far));
 }
 
-var perform_auction = function(bottles, starting_money, p1_action_fn, p2_action_fn){
+var perform_auction = function(bottles, p1_action_fn, p2_action_fn){
   return reduce(function(bottle, bids_so_far){
-    var money = get_money_left(bids_so_far, starting_money, 1)
-    var op_money = get_money_left(bids_so_far, starting_money, 2)
+    var money = get_money_left(bids_so_far, 1)
+    var op_money = get_money_left(bids_so_far, 2)
     var bid1 = _.min([sample(p1_action_fn(bids_so_far, bottles, money, op_money)), money])
     var bid2 = _.min([sample(p2_action_fn(bids_so_far, bottles, op_money, money)), op_money])
 
@@ -144,21 +181,17 @@ var perform_auction = function(bottles, starting_money, p1_action_fn, p2_action_
   bottles)
 }
 
-var dist = Infer({method:"MCMC", samples:50000, callbacks: [editor.MCMCProgress()]}, function(){
-  // var util = [
-  //   sample(Uniform({a:1, b:7})),
-  //   sample(Uniform({a:1, b:7})),
-  //   sample(Uniform({a:1, b:7})),
-  // ];
+var dist = Infer({method:"MCMC", samples:5000, callbacks: [editor.MCMCProgress()]}, function(){
+  var util = gen_random_util();
 
-  var util = sample(Categorical({vs:[[4,4,4 ]], ps: [1]}));
+  // var util = sample(Categorical({vs:[[4,4,4 ]], ps: [1]}));
 
-  var bottles = gen_bottles(8);
+  var bottles = gen_bottles(N);
   // var bottles = _.shuffle(allbottles);
   // print(bottles[0])
   // print(util)
-  var money = 80;
-  var op_util = [4,4,4];
+  var bal_util = gen_balanced_util(bottles, [0,3,0], util_many(bottles, util))
+  var op_util = bal_util[1]//[4,4,4];
   // var op_util = [
   //   sample(Uniform({a:1, b:7})),
   //   sample(Uniform({a:1, b:7})),
@@ -171,7 +204,7 @@ var dist = Infer({method:"MCMC", samples:50000, callbacks: [editor.MCMCProgress(
   // this is a list of bottles and the amounts bid for them by each player
   // var bottlebids = perform_auction(allbottles, util, money, 1, op_util, op_money, 0)
   // var bottlebids = perform_auction(bottles, money, proportional_strat_generator(util), dumb_strat_generator(op_util));
-  var bottlebids = perform_auction(bottles, money, p1_strat, p2_strat);
+  var bottlebids = perform_auction(bottles, p1_strat, p2_strat);
   // from here on out I'm changing notation to p1 and p2 instead of _ and op
 
   var p1_max_util = util_many(bottles, util)
