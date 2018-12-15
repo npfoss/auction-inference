@@ -1,5 +1,5 @@
 var N = 20; // number of bottles
-var starting_money = 300;
+var starting_money = N * 10;//300;
 var won = [1,6,4,5];
 var utilities =  [4, 2, 5];
 var katie_util = [4, 2, 5];
@@ -152,8 +152,7 @@ var gen_random_util = function() {
 
 // only works as player 1 fyi
 var infer_utils = function(op_strat_generator, bottlebids, bottles) {
-  print('start')
-  var dist = Infer({method:'MCMC', samples: 5000},function(){
+  var dist = Infer({method:'MCMC', samples: 10000},function(){
       var utils = gen_random_util()
       var op_strat = op_strat_generator(utils)
       mapN(function(n){
@@ -163,12 +162,10 @@ var infer_utils = function(op_strat_generator, bottlebids, bottles) {
       return utils
     }
   );
-  print('wtf does it ever do this');// + dist);
-  // try{
-    var u = sample(dist);
-  // } catch (err) {
-    // print(err.message);
-  // }
+  // print('wtf does it ever do this');// + dist);
+  // var u = sample(dist);
+  var u = dist.MAP().val;
+  // print('got a value! ' + u)
   return u;
 }
 
@@ -223,11 +220,9 @@ var dist = Infer({method:"MCMC", samples:5000, callbacks: [editor.MCMCProgress()
   var bottlebids = perform_auction(bottles, p1_strat, p2_strat);
   // from here on out I'm changing notation to p1 and p2 instead of _ and op
 
-  console.log('util and inferred')
-  console.log(util)
-  console.log('mid')
-  console.log(infer_utils(proportional_strat_generator, bottlebids, bottles))
-  console.log('end')
+  console.log('util '+ util)
+  // console.log(util)
+  console.log('inferred ' + infer_utils(proportional_strat_generator, bottlebids, bottles))
 
   var p1_max_util = util_many(bottles, util)
   var p2_max_util = util_many(bottles, op_util)
