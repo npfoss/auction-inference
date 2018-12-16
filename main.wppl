@@ -132,6 +132,15 @@ var proportional_strat_generator = function(util){
   return prop_strat
 }
 
+var omnipotent_strat_generator = function(primary_strat, op_strat) {
+  var omnipotent_strat = function(bids_so_far, bottles, money, op_money){
+    var bid_0 = sample(primary_strat(bids_so_far, bottles, money, op_money));
+    var op_bid = sample(op_strat(bids_so_far, bottles, money, op_money));
+    return Gaussian({mu:(1-alpha) * bid_0 + alpha * op_bid, sigma: 1})
+  }
+  return omnipotent_strat
+}
+
 var meta_strat_generator = function(primary_strat, op_strat_generator, total_util) {
   var meta_strat = function(bids_so_far, bottles, money, op_money){
     var op_strat = op_strat_generator(infer_utils(op_strat_generator, bids_so_far, bottles, total_util))
@@ -219,7 +228,8 @@ var dist = Infer({method:"MCMC", samples:5000, callbacks: [editor.MCMCProgress()
 
   var p2_strat = proportional_strat_generator(op_util);
   // var p1_strat = meta_strat_generator(proportional_strat_generator(util), dumb_strat_generator, p1_max_util;
-  var p1_strat = proportional_strat_generator(util)
+  // var p1_strat = proportional_strat_generator(util)
+  var p1_strat = omnipotent_strat_generator(proportional_strat_generator(util), p2_strat)
 
   // this is a list of bottles and the amounts bid for them by each player
   // var bottlebids = perform_auction(allbottles, util, money, 1, op_util, op_money, 0)
