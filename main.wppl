@@ -227,9 +227,9 @@ var dist = Infer({method:"MCMC", samples:5000, callbacks: [editor.MCMCProgress()
   var bottlebids = perform_auction(bottles, p1_strat, p2_strat);
   // from here on out I'm changing notation to p1 and p2 instead of _ and op
 
-  console.log('util '+ util)
+  // console.log('util '+ util)
   // console.log(util)
-  console.log('inferred ' + infer_utils(proportional_strat_generator, bottlebids, bottles, p1_max_util))
+  // console.log('inferred ' + infer_utils(proportional_strat_generator, bottlebids, bottles, p1_max_util))
 
   // percent of max possible utility
   var p1_util = util_many(map(function(bbb) {
